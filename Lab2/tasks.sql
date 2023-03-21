@@ -41,4 +41,17 @@ BEGIN
     END IF;
     CLOSE ct1;
 
+    IF :NEW.ID IS NULL
+    THEN
+       OPEN ct2;
+        FETCH ct2 INTO NEW_ID; 
+        IF ct2%NOTFOUND
+        THEN
+            :NEW.ID := 1;
+        ELSE
+            :NEW.ID := NEW_ID + 1;
+        END IF;
+        CLOSE ct2;
+    END IF;
+
 END;

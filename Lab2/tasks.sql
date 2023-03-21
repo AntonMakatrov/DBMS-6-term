@@ -202,3 +202,28 @@ alter table GROUPS
 C_VAL NUMBER DEFAULT 0
 
 drop table GROUPS
+
+
+CREATE SEQUENCE id_auto_increment_for_groups 
+    START WITH 1 
+    INCREMENT BY 1 
+    NOMAXVALUE;
+
+CREATE SEQUENCE id_auto_increment_for_students 
+    START WITH 1 
+    INCREMENT BY 1 
+    NOMAXVALUE;
+
+CREATE OR REPLACE TRIGGER GEN_STUDENTS_ID
+    BEFORE INSERT ON STUDENTS FOR EACH ROW
+BEGIN
+    SELECT  id_auto_increment_for_students.NEXTVAL 
+        INTO :NEW.id FROM DUAL;
+END;
+
+CREATE OR REPLACE TRIGGER GEN_GROUPS_ID
+    BEFORE INSERT ON GROUPS FOR EACH ROW
+BEGIN
+    SELECT id_auto_increment_for_groups.NEXTVAL 
+        INTO :NEW.id FROM DUAL;
+END;

@@ -55,3 +55,57 @@ BEGIN
     END IF;
 
 END;
+
+CREATE OR REPLACE TRIGGER GROUPS_CHECK_TRIGGER
+BEFORE INSERT ON GROUPS
+FOR EACH ROW
+DECLARE
+    EX_ID NUMBER;
+    EX_NAME VARCHAR2(40);
+    NEW_ID NUMBER;
+
+    CURSOR ct1 IS
+    SELECT ID
+    FROM GROUPS
+    WHERE ID = :NEW.ID;
+
+    CURSOR ct2 IS
+    SELECT NAME
+    FROM GROUPS
+    WHERE NAME = :NEW.NAME;
+
+    CURSOR ct3 IS
+    SELECT ID
+    FROM GROUPS
+    ORDER BY ID DESC
+    FETCH NEXT 1 ROWS ONLY;
+BEGIN
+    OPEN ct1;
+    FETCH ct1 INTO EX_ID;
+    IF NOT ct1%NOTFOUND
+     THEN
+        RAISE_APPLICATION_ERROR(-20001, 'There`s such id already exists');
+    END IF;
+    CLOSE ct1;
+
+    OPEN ct2;
+    FETCH ct2 INTO EX_NAME;
+    IF NOT ct2%NOTFOUND
+     THEN
+        RAISE_APPLICATION_ERROR(-20001, 'There`s such name already exists');
+    END IF;
+    CLOSE ct2;
+
+    IF :NEW.ID IS NULL
+    THEN
+       OPEN ct3;
+        FETCH ct3 INTO NEW_ID; 
+        IF ct3%NOTFOUND
+        THEN
+            :NEW.ID := 1;
+        ELSE
+            :NEW.ID := NEW_ID + 1;
+        END IF;
+        CLOSE ct3;
+    END IF;
+END;

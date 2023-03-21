@@ -187,6 +187,10 @@ BEGIN
         UPDATE GROUPS 
         SET C_VAL = C_VAL + 1 
         WHERE ID = :NEW.GROUP_ID;
+
+        UPDATE GROUPS 
+        SET C_VAL = C_VAL - 1 
+        WHERE ID = :OLD.GROUP_ID;
     ELSIF DELETING THEN
         UPDATE GROUPS 
         SET C_VAL = C_VAL - 1 

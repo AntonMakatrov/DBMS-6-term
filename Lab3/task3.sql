@@ -284,3 +284,21 @@ BEGIN
     END LOOP;
 END;
 /
+
+CREATE TABLE cycle_check
+(
+    name VARCHAR2(40),
+    num NUMBER
+);
+
+CREATE OR REPLACE PROCEDURE EXECUTE_SCRIPT(dev_schema_name VARCHAR2, prod_schema_name VARCHAR2) AS
+
+BEGIN
+    CHECK_CYCLE(dev_schema_name);
+    REMOVE_PROD_OBJ(dev_schema_name, prod_schema_name);
+    COMP_TABLES(dev_schema_name, prod_schema_name);
+    COMP_PROCEDURES(dev_schema_name, prod_schema_name);
+    COMP_FUNCTIONS(dev_schema_name, prod_schema_name);
+    COMP_PACKAGES(dev_schema_name, prod_schema_name);
+    COMP_INDEXES(dev_schema_name, prod_schema_name);
+END;

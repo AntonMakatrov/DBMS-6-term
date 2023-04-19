@@ -296,7 +296,7 @@ CREATE OR REPLACE PROCEDURE EXECUTE_SCRIPT(dev_schema_name VARCHAR2, prod_schema
 BEGIN
     CHECK_CYCLE(dev_schema_name);
     REMOVE_PROD_OBJ(dev_schema_name, prod_schema_name);
-    COMP_TABLES(dev_schema_name, prod_schema_name);
+    GET_TABLES(dev_schema_name, prod_schema_name);
     COMP_PROCEDURES(dev_schema_name, prod_schema_name);
     COMP_FUNCTIONS(dev_schema_name, prod_schema_name);
     COMP_PACKAGES(dev_schema_name, prod_schema_name);

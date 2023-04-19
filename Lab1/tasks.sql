@@ -7,7 +7,7 @@ DROP TABLE MyTable;
 
 -- Task 2
 BEGIN
-FOR mytab_counter in 1..10000
+FOR mytab_counter in 1..10
 LOOP
     INSERT INTO MyTable VALUES (mytab_counter, ROUND(DBMS_RANDOM.VALUE(1, 10000), 0));
 END LOOP;
@@ -68,14 +68,7 @@ END;
 DECLARE
     result VARCHAR2(5);
 begin
-    update MyTable
-    set MyTable.val = 1
-    where 1=1;
-    result := task3();
-    DBMS_OUTPUT.PUT_LINE('Current result of task3 is: ' || result);
-    update MyTable
-    set MyTable.val = 2
-    where 1=1;
+    
     result := task3();
     DBMS_OUTPUT.PUT_LINE('New result of task3 is: ' || result);
 end;
@@ -102,7 +95,7 @@ BEGIN
             DBMS_OUTPUT.PUT_LINE(result);
             return result;
 END;
-
+delete from MYTABLE;
 -- Task 4 test
 DECLARE
     result VARCHAR2(100);

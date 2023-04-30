@@ -6,6 +6,7 @@ create or replace FUNCTION json_orm(json_data IN VARCHAR2) RETURN SYS_REFCURSOR 
    v_filter_conditions VARCHAR2(4000);
    v_set_clause VARCHAR2(4000);
    v_values VARCHAR2(4000);
+   v_pks VARCHAR2(4000);
    v_sql VARCHAR2(8000);
    v_column_count number;
    v_cursor SYS_REFCURSOR;
@@ -100,7 +101,27 @@ create or replace FUNCTION json_orm(json_data IN VARCHAR2) RETURN SYS_REFCURSOR 
                                data_type VARCHAR2(100) PATH '$.type')
                             ) j;
 
-         v_sql := 'CREATE TABLE ' || v_tables || ' (' || v_columns || ')';
+         SELECT LISTAGG ('constraint pk_' || v_tables || '_' || col_name || ' primary_key (' || col_name || ')', ', ')
+           INTO v_pks
+           FROM JSON_TABLE (json_data,
+                            '$.primary_keys[*]' COLUMNS (col_name VARCHAR2 (4000) PATH '$')) j;
+
+         v_sql := 'CREATE TABLE ' || v_tables || ' (' || v_columns || ', ' || v_pks || ');';
+
+         SELECT JSON_VALUE(json_data, '$.primary_keys[0]') INTO v_pks FROM DUAL;
+
+         v_sql := v_sql || ' ' || '
+
+             create sequence ' || v_tables || '_seq start with 1;' ||
+                  '
+             CREATE OR REPLACE TRIGGER tr_' || v_tables || '_pk_autoincrement
+             BEFORE INSERT ON ' || v_tables || '
+             FOR EACH ROW
+             BEGIN
+             SELECT ' || v_tables || '_seq' || '.NEXTVAL
+             INTO :NEW.' || v_pks || '
+             FROM DUAL;
+             END;';
 
      elsif v_query_type = 'DROP TABLE' then
 

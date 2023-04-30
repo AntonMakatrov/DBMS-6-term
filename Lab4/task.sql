@@ -1,5 +1,5 @@
 create or replace FUNCTION json_orm(json_data IN VARCHAR2) RETURN SYS_REFCURSOR IS
-   v_query_type VARCHAR2(10);
+   v_query_type VARCHAR2(100);
    v_columns VARCHAR2(4000);
    v_tables VARCHAR2(4000);
    v_join_conditions VARCHAR2(4000);
@@ -16,19 +16,19 @@ create or replace FUNCTION json_orm(json_data IN VARCHAR2) RETURN SYS_REFCURSOR 
 
   if v_query_type = 'SELECT' then
 
-       SELECT LISTAGG(column_name, ', ') WITHIN GROUP (ORDER BY column_name)
+       SELECT LISTAGG(column_name, ', ')
          INTO v_columns
          FROM JSON_TABLE(json_data, '$.columns[*]' COLUMNS (column_name VARCHAR2(1000) PATH '$')) j;
 
-       SELECT LISTAGG(table_name, ', ') WITHIN GROUP (ORDER BY table_name)
+       SELECT LISTAGG(table_name, ', ') 
          INTO v_tables
          FROM JSON_TABLE(json_data, '$.tables[*]' COLUMNS (table_name VARCHAR2(1000) PATH '$')) j;
 
-       SELECT LISTAGG(table_name, ' AND ') WITHIN GROUP (ORDER BY table_name)
+       SELECT LISTAGG(table_name, ' AND ') 
          INTO v_join_conditions
          FROM JSON_TABLE(json_data, '$.join_conditions[*]' COLUMNS (table_name VARCHAR2(1000) PATH '$')) j;
 
-       SELECT LISTAGG(table_name, ' AND ') WITHIN GROUP (ORDER BY table_name)
+       SELECT LISTAGG(table_name, ' AND ')
          INTO v_filter_conditions
          FROM JSON_TABLE(json_data, '$.filter_conditions[*]' COLUMNS (table_name VARCHAR2(1000) PATH '$')) j;
 
@@ -65,7 +65,7 @@ create or replace FUNCTION json_orm(json_data IN VARCHAR2) RETURN SYS_REFCURSOR 
      elsif v_query_type = 'DELETE' then
          SELECT JSON_VALUE(json_data, '$.table') INTO v_tables FROM DUAL;
 
-         SELECT LISTAGG (condition, ' AND ') WITHIN GROUP (ORDER BY condition)
+         SELECT LISTAGG (condition, ' AND ') 
            INTO v_filter_conditions
            FROM JSON_TABLE (json_data,
                             '$.filter_conditions[*]' COLUMNS (condition VARCHAR2 (4000) PATH '$')) j;
@@ -75,7 +75,7 @@ create or replace FUNCTION json_orm(json_data IN VARCHAR2) RETURN SYS_REFCURSOR 
      elsif v_query_type = 'UPDATE' then
         SELECT JSON_VALUE(json_data, '$.table') INTO v_tables FROM DUAL;
 
-        SELECT LISTAGG (column_name || ' = ' || val, ', ') WITHIN GROUP (ORDER BY column_name)
+        SELECT LISTAGG (column_name || ' = ' || val, ', ') 
           INTO v_set_clause
           FROM JSON_TABLE (json_data,
                            '$.set[*]' COLUMNS (column_name VARCHAR2 (1000) PATH '$[0]',
@@ -87,6 +87,26 @@ create or replace FUNCTION json_orm(json_data IN VARCHAR2) RETURN SYS_REFCURSOR 
                             '$.filter_conditions[*]' COLUMNS (condition VARCHAR2 (4000) PATH '$')) j;
 
          v_sql := 'UPDATE ' || v_tables || ' SET ' || v_set_clause || ' WHERE ' || v_filter_conditions;
+        
+     elsif v_query_type = 'CREATE TABLE' then
+
+         SELECT JSON_VALUE(json_data, '$.table') INTO v_tables FROM DUAL;
+
+         SELECT LISTAGG(column_name || ' ' || data_type, ', ')
+           INTO v_columns
+           FROM JSON_TABLE (json_data,
+                            '$.columns[*]' COLUMNS (
+                               column_name VARCHAR2(100) PATH '$.name',
+                               data_type VARCHAR2(100) PATH '$.type')
+                            ) j;
+
+         v_sql := 'CREATE TABLE ' || v_tables || ' (' || v_columns || ')';
+
+     elsif v_query_type = 'DROP TABLE' then
+
+         SELECT JSON_VALUE(json_data, '$.table') INTO v_tables FROM DUAL;
+         v_sql := 'DROP TABLE ' || v_tables;
+
 
      else
          raise_application_error(-20005, 'Incorrect query type ');
@@ -94,7 +114,7 @@ create or replace FUNCTION json_orm(json_data IN VARCHAR2) RETURN SYS_REFCURSOR 
      end if;
 
      DBMS_OUTPUT.PUT_LINE(v_sql);
-     
+
      RETURN v_cursor;
 
  END json_orm; 

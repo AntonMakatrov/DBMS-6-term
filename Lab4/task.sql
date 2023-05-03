@@ -256,7 +256,29 @@ BEGIN
     end if;
 
     DBMS_OUTPUT.PUT_LINE(v_sql);
-
+    EXECUTE IMMEDIATE v_sql;
     RETURN v_cursor;
 
 END json_orm;
+
+
+
+CREATE OR REPLACE PROCEDURE EXECUTE_REQUEST(json_text CLOB) IS
+    json JSON_OBJECT_T;
+    select_cursor SYS_REFCURSOR;
+    id NUMBER;
+    name VARCHAR2(40);
+BEGIN
+    json := JSON_OBJECT_T.parse(json_text);
+    IF json.GET_STRING('request') = 'SELECT' THEN
+        OPEN select_cursor FOR json_orm(json);
+        LOOP
+            FETCH select_cursor INTO id, name;
+            DBMS_OUTPUT.PUT_LINE(id || ' ' || name);
+            EXIT WHEN select_cursor%NOTFOUND;
+        END LOOP;
+        CLOSE select_cursor;
+    ELSE
+        EXECUTE IMMEDIATE PARSE_REQUEST(json);
+    END IF;
+END;
